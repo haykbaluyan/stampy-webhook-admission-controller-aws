@@ -16,7 +16,7 @@ all: vars gopath vendor build
 
 build:
 	echo "Running build"
-	cd ${TEST_DIR} && go build -o ${PROJ_ROOT}/bin/validate-signature-webhook ./
+	cd ${TEST_DIR} && go build -o ${PROJ_ROOT}/bin/stampy-admission-webhook ./
 
 vendor: get
 
@@ -41,3 +41,7 @@ get:
 	$(call httpsclone,${GITHUB_HOST},modern-go/concurrent,                          ${GOPATH}/src/github.com/modern-go/concurrent,                     bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94)
 	$(call httpsclone,${GITHUB_HOST},modern-go/reflect2,                            ${GOPATH}/src/github.com/modern-go/reflect2,                       94122c33edd36123c84d5368cfb2b69df93a0ec8)
 	$(call httpsclone,${GITHUB_HOST},go-inf/inf,                                    ${GOPATH}/src/gopkg.in/inf.v0,                                     8237a9a5367b2a82f922b38d4b3676293e031763)
+
+docker: build
+	CGO_ENABLED=0 GOOS=linux docker build --no-cache -t ${DOCKER_USER}/stampy-admission-webhook:v1 .
+	docker push ${DOCKER_USER}/stampy-admission-webhook:v1

@@ -9,7 +9,7 @@ import (
 	"github.com/golang/glog"
 	"k8s.io/api/admission/v1beta1"
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
-	corev1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -35,19 +35,26 @@ type WhSvrParameters struct {
 
 // main mutation process
 func (vh *webhook) mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+	glog.Info("api=mutate, reason=started")
 	status := "Success"
 	allowed := true
-	fmt.Println("New request ", ar.Request.UID, ar.Request.Kind, ar.Request.Operation, ar.Request.Namespace)
-	if ar.Request.Kind.Kind != "Pod" {
-		return &v1beta1.AdmissionResponse{
+	glog.Infof("api=mutate, uid=%q, kind=%q, operation=%q, namespace=%q", ar.Request.UID, ar.Request.Kind, ar.Request.Operation, ar.Request.Namespace)
+	if ar.Request.Kind.Kind != "Deployment" {
+		admissionResp := &admissionv1beta1.AdmissionResponse{
+			UID:     ar.Request.UID,
+			Allowed: allowed,
 			Result: &metav1.Status{
-				Message: fmt.Sprintf("Resource type is not pod, skipped", ar.Request.Kind),
+				Status:  status,
+				Message: "ok",
 			},
 		}
+
+		return admissionResp
 	}
 
-	pod := &corev1.Pod{}
-	if _, _, err := deserializer.Decode(ar.Request.Object.Raw, nil, pod); err != nil {
+	var deployment appsv1.Deployment
+	if err := json.Unmarshal(ar.Request.Object.Raw, &deployment); err != nil {
+		glog.Errorf("api=mutate, reason='could not unmarshal raw object: %v'", err)
 		return &v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: fmt.Sprintf("could not decode admission request object"),
@@ -55,31 +62,77 @@ func (vh *webhook) mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionRespons
 		}
 	}
 
-	for _, container := range pod.Spec.Containers {
-		limits := container.Resources.Limits
-		requests := container.Resources.Requests
+	var patch []patchOperation
+	containers := deployment.Spec.Template.Spec.Containers
+	for i, container := range containers {
+		image := container.Image
+		glog.Infof("api=validate, image=%q", image)
 
-		cpuLimit := limits["cpu"]
-		cpuRequest := requests["cpu"]
-		fmt.Println("Container resources cpu ", cpuLimit, cpuRequest)
+		patch = append(patch, patchOperation{
+			Op:    "replace",
+			Path:  fmt.Sprintf("/spec/template/spec/containers/%d/image", i),
+			Value: image + ":trusty",
+		})
+	}
+	patchBytes, err := json.Marshal(patch)
+	if err != nil {
+		return &v1beta1.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: err.Error(),
+			},
+		}
+	}
 
-		limit, ok := cpuLimit.AsInt64()
-		if !ok {
-			continue
+	glog.Infof("api=mutate, admissionResponse_patch=%v\n", string(patchBytes))
+	return &v1beta1.AdmissionResponse{
+		Allowed: true,
+		Patch:   patchBytes,
+		PatchType: func() *v1beta1.PatchType {
+			pt := v1beta1.PatchTypeJSONPatch
+			return &pt
+		}(),
+	}
+}
+
+type patchOperation struct {
+	Op    string      `json:"op"`
+	Path  string      `json:"path"`
+	Value interface{} `json:"value,omitempty"`
+}
+
+// main mutation process
+func (vh *webhook) validate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+	glog.Info("api=validate, reason=started")
+	status := "Success"
+	allowed := true
+	glog.Infof("api=validate, uid=%q, kind=%q, operation=%q, namespace=%q", ar.Request.UID, ar.Request.Kind, ar.Request.Operation, ar.Request.Namespace)
+	if ar.Request.Kind.Kind != "Deployment" {
+		admissionResp := &admissionv1beta1.AdmissionResponse{
+			UID:     ar.Request.UID,
+			Allowed: allowed,
+			Result: &metav1.Status{
+				Status:  status,
+				Message: "ok",
+			},
 		}
 
-		request, ok := cpuRequest.AsInt64()
-		if !ok {
-			continue
-		}
+		return admissionResp
+	}
 
-		if request > 0 {
-			ratio := limit / request
-			fmt.Println("Container overcommit ratio ", container.Name, ratio)
-			if ratio > 3 {
-				status = "Failure"
-			}
+	var deployment appsv1.Deployment
+	if err := json.Unmarshal(ar.Request.Object.Raw, &deployment); err != nil {
+		glog.Errorf("api=validate, reason='Could not unmarshal raw object: %v'", err)
+		return &v1beta1.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: fmt.Sprintf("could not decode admission request object"),
+			},
 		}
+	}
+
+	containers := deployment.Spec.Template.Spec.Containers
+	for _, container := range containers {
+		image := container.Image
+		glog.Infof("api=validate, image=%q", image)
 	}
 
 	if status != "Success" {
@@ -99,6 +152,7 @@ func (vh *webhook) mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionRespons
 }
 
 func (vh *webhook) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	glog.Info("ServeHTTP started")
 	// Get webhook body with the admission review.
 	var body []byte
 	if r.Body != nil {
@@ -133,6 +187,8 @@ func (vh *webhook) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(r.URL.Path)
 		if r.URL.Path == "/mutate" {
 			admissionResponse = vh.mutate(&ar)
+		} else if r.URL.Path == "/validate" {
+			admissionResponse = vh.validate(&ar)
 		} else {
 			admissionResponse = &v1beta1.AdmissionResponse{
 				Result: &metav1.Status{

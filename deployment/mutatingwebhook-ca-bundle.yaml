@@ -1,0 +1,23 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: mutating-admission-webhook-cfg
+  labels:
+    app: mutating-admission-webhook
+webhooks:
+  - name: mutate.stampy.data.sfdc.net
+    clientConfig:
+      service:
+        name: stampy-admission-webhook-svc
+        namespace: default
+        path: "/mutate"
+      caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM1ekNDQWMrZ0F3SUJBZ0lCQVRBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwdGFXNXAKYTNWaVpVTkJNQjRYRFRFNU1ETXlNREV4TkRZMU4xb1hEVEk1TURNeE9ERXhORFkxTjFvd0ZURVRNQkVHQTFVRQpBeE1LYldsdWFXdDFZbVZEUVRDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTnFxClRTZnk4UjFZaFE5RVkzZG9DRi9Lc3hueVNkRjk2YnVyME5ZS0lSQkZHTnUwc0YrZ1dwQkhNT2t6QjRPWVJyYWUKa0dvSGVqb1dPTkRhOVZWWlhMdGovZTlVZDBGYTlzd2lqa2hFVk5VZlFNUVc3RTVoczZrWGd3Ykt1TmZCQUgrUgo0d2F5VVVoUkF3ck5iajY1YW5uR0JGN1VpRkxkK2tDZ29idkNjMjVRM2ZLWVZSOEdxWEZaZElSU25JeGtmOUdCClcweUdTS2Q1TDd4b0JRZTBzd2lsZDU5MHVZSWZwQW1wZVByUkYrbzhzbm9lYklrV2ZHLzFrTW9QV056Z2JXRUQKUndZTU03V2Iwa29iamJSZFBMR1pndTdkWS93L0F4czJDTlFsZXVxWGNmejF1aVJYK1BZaUQvaUk2YlEvRzZZaQozY216dG9IZlpXWkR1b1Y0dDQ4Q0F3RUFBYU5DTUVBd0RnWURWUjBQQVFIL0JBUURBZ0trTUIwR0ExVWRKUVFXCk1CUUdDQ3NHQVFVRkJ3TUNCZ2dyQmdFRkJRY0RBVEFQQmdOVkhSTUJBZjhFQlRBREFRSC9NQTBHQ1NxR1NJYjMKRFFFQkN3VUFBNElCQVFBZThlYXZmOXdyZHJQNmJRaXJ4eFAvT2ttYWJza2FBU3ZZR1grelFSOFdLNFZ5cmJqQgpyOVhDQmNzNDl2NWRiMGxEQWRreDExMlFjWTdlU0FubXliV1BtcXFJblZkRzI1QnhKQ1lwVk1IcXpVYVBWRTFFCm5zSEZJNlFSVmZQSnpjMWhuMlpZLzY5TktuNnZqYjcvN0o5b0JFallLV051L1JJbHBUdnF1MVVOVjRZcDNzMFYKUjNjbEwwT012L0hIdXZTZ215eFlNRWVacm5XUmdvUnZkNFR6SjBMS2haZkZPalBFQWtETDR6M1F3ZlR3R2RNNwpBdXBUTTFlV1BZVEplTTcwd1pRMXk3SkQ2RlRvbFpuSFc0OThIQit6UGtwUVdqU2dEenFQWDRRNWxhb09aVHpiCjRuWmF0MC80b2o0UHZYYjcvbGlESWp2eldkaGhtMDhIUEFhbAotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+    rules:
+      - operations: [ "CREATE" ]
+        apiGroups: ["apps", ""]
+        apiVersions: ["v1"]
+        resources: ["deployments"]
+    #namespaceSelector:
+    #  matchLabels:
+    #    stampy-admission-webhook: enabled
+

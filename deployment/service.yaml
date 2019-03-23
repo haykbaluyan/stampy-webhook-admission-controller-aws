@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: stampy-admission-webhook-svc
+  labels:
+    app: stampy-admission-webhook
+spec:
+  ports:
+  - port: 443
+    targetPort: 443
+  selector:
+    app: stampy-admission-webhook
