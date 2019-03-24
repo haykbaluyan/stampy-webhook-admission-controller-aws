@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: busybox-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app:  busybox
+  template:
+    metadata:
+      labels:
+        app:  busybox
+    spec:
+      containers:
+        - name:  ubuntu-deployment-container
+          image: 121924372514.dkr.ecr.us-east-2.amazonaws.com/busybox-unsigned:v1
+          imagePullPolicy: Always

@@ -1,0 +1,28 @@
+codecov:
+  # The GHE user to update PR status.
+  bot: svc-moe-ci
+  # Token to use for uploading coverage reports to https://codecov.moe.prd-sam.prd.slb.sfdc.net/ghe.
+  token: fe599b63-00cb-45f9-9ee8-02d5d6ecd591
+  notify:
+    require_ci_to_pass: no
+
+coverage:
+  precision: 2
+  round: up
+  # Anything less than or equal to 40% coverage is red. Anything greater than or equal to 75% coverage is green.
+  # Between 40 and 75 is a gradient from red to green.
+  range: "40...75"
+
+  status:
+    # Coverage evaluation on master.
+    project:
+      default:
+        target: auto
+        # Allow coverage on a PR to decrease overall project coverage by .5% without failing the status check.
+        threshold: 0.5
+        base: auto
+    # PR evaluation. Fail the status if patch coverage is below target for a PR.
+    patch:
+      default:
+        target: auto
+        threshold: 0.5

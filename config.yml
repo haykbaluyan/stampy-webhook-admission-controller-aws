@@ -1,4 +1,3 @@
 project:
   org: git.soma.salesforce.com
-  name: validate-signature-webhook
-  docker_user: haykbaluyan
+  name: stampy-webhook-admission-controller-aws

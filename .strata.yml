@@ -1,0 +1,12 @@
+pipeline_template: docker/Jenkinsfile-1
+email_reply_to: ikaur@salesforce.com,hbaluyan@salesforce.com
+time_out_mins: 180
+number_of_artifacts_to_keep: 3
+compliance_required: false
+docker_test_images:
+- dva/stampy_build_image
+unit_tests_command: make vars gopath version test codecovtest
+docker_package_images:
+- dva/stampy_build_image
+package_repository: kuleana
+publish_to_gcp: true

@@ -43,6 +43,7 @@ export GOROOT=$GOROOT
 export PATH=$PATH:$PROJ_GOPATH/bin:$PROJ_DIR/bin:$PROJ_DIR/.tools/bin:$GOROOT/bin
 env | grep GO
 popd
+
 code .
 else
 #

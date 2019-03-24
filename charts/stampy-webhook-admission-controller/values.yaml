@@ -1,0 +1,18 @@
+rbac:
+  create: true
+admissionRegistration:
+  # valid values are "ValidatingWebhookConfiguration", and "MutatingWebhookConfiguration"
+  kind: MutatingWebhookConfiguration
+  path: /mutate
+  # valid values are "Ignore" and "Fail"
+  failurePolicy: Ignore
+controller:
+  image: 121924372514.dkr.ecr.us-east-2.amazonaws.com/stampy-webhook-admission-controller
+  imageTag: v0.2.0
+  imagePullPolicy: Always
+  serviceAccount: stampy-webhook-admission-controller
+  service:
+    port: 443
+    targetPort: 17772
+  region: us-east-2
+  bucket: docker-signatures
