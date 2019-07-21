@@ -25,3 +25,4 @@ helm init --service-account tiller --upgrade
 ```
 # helm install ./stampy-webhook-admission-controller-0.2.0.tgz --set controller.image=121924372514.dkr.ecr.us-east-2.amazonaws.com/stampy-webhook-admission-controller --set controller.imageTag=v0.2.0 --set controller.region=us-east-2 --set controller.bucket=docker-signatures
 ```
+
